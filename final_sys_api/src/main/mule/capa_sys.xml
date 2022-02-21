@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <http:listener-config name="misael_proyecto_final-httpListenerConfig" basePath="/api">
+        <http:listener-connection host="0.0.0.0" port="8083" />
+    </http:listener-config>
+    <apikit:config name="misael_proyecto_final-config" api="misael_proyecto_final.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <configuration-properties doc:name="Configuration properties" doc:id="936bfee8-8fd4-4610-863e-4a34069c1f3c" file="properties.yaml" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="5e4ffbc9-f61b-40c6-a343-b409169ad909" >
+		<db:my-sql-connection host="${db.mysql.host}" port="${db.mysql.port}" user="${db.mysql.user}" password="${db.mysql.password}" database="${db.mysql.database}" />
+	</db:config>
+	<flow name="misael_proyecto_final-main">
+        <http:listener config-ref="misael_proyecto_final-httpListenerConfig" path="/*" doc:name="Listener">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="misael_proyecto_final-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\persons:misael_proyecto_final-config">
+		<set-variable value="#[attributes.queryParams.partial_name]" doc:name="Set Variable" doc:id="87a5c478-fbc8-4da6-8748-4a098642eedc" variableName="partial_name"/>
+		<choice doc:name="Choice" doc:id="bea41d3e-bda7-4099-a236-f7b0ad0bada8" >
+			<when expression="#[attributes.queryParams.partial_name != null]">
+				<db:select doc:name="Select table persons filter" doc:id="749c78a2-270b-478c-b795-facbff1b3e1e" config-ref="Database_Config">
+			<db:sql><![CDATA[select id,fullname,lastname,country,gender,age from persons
+ where fullname like concat('%',concat(:name,'%')) order by fullname asc;]]></db:sql>
+			<db:input-parameters><![CDATA[#[{name: vars.partial_name }]]]></db:input-parameters>
+		</db:select>
+			</when>
+			<otherwise>
+				<db:select doc:name="Select from persons default" doc:id="a2acb0cd-4f23-47ce-8764-f470df9a940b" config-ref="Database_Config">
+			<db:sql><![CDATA[select fullname,lastname,country,age,gender from persons;]]></db:sql>
+		</db:select>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="print_of_persons in payload" doc:id="7e1c3ec2-ba66-4572-950c-0f1594ceebc9">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1df52381-2656-4716-844e-6ff3b338764f" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION">
+				<flow-ref doc:name="Flow Reference" doc:id="6a9bc380-442a-4998-8db1-2e1c1b344af0" name="flow_problems_get" />
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+	<flow name="post:\persons:application\json:misael_proyecto_final-config">
+		<db:insert doc:name="Insert to table person" doc:id="77fd3b80-3526-4079-bd87-aaf6674da4e4" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into persons (fullname,lastname,country, gender,age) 
+values (:fullname,:lastname,:country,:gender,:age);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	fullname: payload.fullname,
+	lastname: payload.lastname,
+	country: payload.country,
+	gender: payload.gender,
+	age: payload.age
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="message_of_added" doc:id="0b9abb57-cef9-43ce-9300-f40a70a422c1" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Person Added"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="93d561d7-d463-43a4-b852-db66083604fa" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION, DB:RETRY_EXHAUSTED">
+				<flow-ref doc:name="Flow Reference" doc:id="7a58657c-6226-4fe0-9992-6de88778e10e" name="flow_message_parameters"/>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+	<flow name="get:\persons\(id):misael_proyecto_final-config">
+        <db:select doc:name="Select from table persons " doc:id="a0167eaa-7167-4a11-92ce-6001db71b586" config-ref="Database_Config">
+			<db:sql><![CDATA[select id,fullname,lastname,country,gender,age from persons where id= :ID;]]></db:sql>
+			<db:input-parameters><![CDATA[#[{ID: attributes.uriParams.id}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="print_of_person_for_id" doc:id="ffc1bf7e-2807-43a7-b154-853c752dec77">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cccc9c47-dc22-4bae-986d-12d0b1cfd50d" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION">
+				<flow-ref doc:name="Flow Reference" doc:id="d5498c0e-f2be-4c4d-9f19-7c8f0020cffb" name="flow_message_not_found"/>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+	<flow name="delete:\persons\(id):misael_proyecto_final-config">
+        <db:delete doc:name="Delete from table persons" doc:id="98c4313b-894d-4f3f-8d5e-71f5cc5ea3d3" config-ref="Database_Config">
+			<db:sql ><![CDATA[delete from persons where id= :ID;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{ID: attributes.uriParams.id}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="message_of_person_delete" doc:id="3307ccb9-7b2a-46a6-a75e-04468869b0d8" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  mesaage: "Person Eliminated"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="40943dec-eab0-4821-a425-2c4f1c93c953" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION">
+				<flow-ref doc:name="Flow Reference" doc:id="59242fa9-9202-4d40-92db-7f9996bf78ed" name="flow_message_not_found"/>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+	<flow name="patch:\persons\(id):application\json:misael_proyecto_final-config">
+        <db:update doc:name="Update to table persons" doc:id="4220f176-e154-42f2-85dd-32beed8af9b9" config-ref="Database_Config">
+			<db:sql><![CDATA[update persons set fullname=:fullname,
+lastname=:lastname,address=:address,
+age=:age,country=:country
+where id= :ID;]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	ID: attributes.uriParams.id,
+	age: payload.payload.age,
+	fullname: payload.fullname,
+	lastname: payload.lastname,
+	country: payload.country,
+	gender: payload.gender
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="message_of_modified">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  mesaage: "Person Modified"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="91ebf2d3-1ba6-4875-9ad7-fd4ba0809e58" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION">
+				<flow-ref doc:name="Flow Reference" doc:id="59186f5e-79de-4c0b-9506-4bd39fc672c1" name="flow_message_parameters" />
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+	<sub-flow name="flow_message_not_found" doc:id="f5b59609-6e85-4676-9ad9-b02b485f07cc" >
+		<ee:transform doc:name="person_not_found" doc:id="feabdf8c-0693-4194-9d1a-faf8db5551a4">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Person not found"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+	</sub-flow>
+	<sub-flow name="flow_message_parameters" doc:id="7d07e253-8b31-4d04-84a1-68ce243c9b89" >
+		<ee:transform doc:name="parameters_invalids" doc:id="17401255-8768-4f78-862a-7a56590d7616">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Parameters Invalids"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+	</sub-flow>
+	<sub-flow name="flow_problems_get" doc:id="84c1ccc4-ac56-44ab-94f4-2ef613d71b8f" >
+		<ee:transform doc:name="problems_in_gets" doc:id="c377627e-a350-45a8-8a3a-cf06c3c6d32d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Server Error"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>

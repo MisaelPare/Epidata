@@ -1,0 +1,101 @@
+#%RAML 1.0
+title: Misael_Proyecto_Final
+
+types: 
+  persons: !include structures/person.raml
+
+/persons:
+  get:
+    description: Filtrado por los distintos parameters
+    queryParameters:
+      gender:
+        type: string 
+        enum:
+          - Hombre
+          - Mujer
+        required: false
+      age_min:
+        type: number
+        required: false
+      age_max:
+        type: number
+        required: false
+      partial_name:
+        type: string
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              type: persons[]
+              example: !include examples/persons_example.raml
+      500:
+        body:
+          application/json:
+            example:
+              message: "Server Error"
+  post:
+    body:
+      application/json:
+        properties:
+        type: persons
+        example: !include examples/person_ID.raml
+    responses: 
+      201:
+        body:
+          application/json:
+            example:
+              message: "Person Added"
+      400:
+        body:
+          application/json:
+            example:
+              message: "Parameters Invalids"
+  /{id}:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+                type: persons
+                example: !include examples/person_ID.raml
+        404:
+          body:
+            application/json:
+              example:
+                message: "Person Not Found"
+    patch:
+      body:
+        application/json:
+          properties:
+            type: persons
+            example: !include structures/person.raml
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                mesaage: "Person Modified"
+        400:
+          body:
+            application/json:
+              example:
+                message: "Parameters Invalids"
+        404:
+          body:
+            application/json:
+              example:
+                message: "Person Not Found"
+    delete:
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                mesaage: "Person Eliminated"
+        404:
+          body:
+            application/json:
+              example:
+                message: "Person Not Found"

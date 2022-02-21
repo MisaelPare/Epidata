@@ -1,0 +1,7 @@
+db:
+  mysql:
+    host: "localhost"
+    password: "12183606Seba"
+    user: "root"
+    port: "3306"
+    database: "epidata"
